@@ -7,6 +7,7 @@
   var Store = window.AsykStorage;
   var Sound = window.AsykAudio;
   var Physics = window.AsykPhysics;
+  var Ata = window.AsykAta;
 
   var SAKA = { r: 30, m: 2.4, friction: 850 };
   var ASYK = { r: 22, m: 1 };
@@ -140,9 +141,11 @@
       : [makePlayer('Вы', 'p1')];
     game.current = 0;
     game.aim = null;
-    game.paused = false;
+    menuPaused = false;
     $('modal-pause').hidden = true;
     pointer = null;
+    syncPause();
+    Ata.resetTips();
 
     $('hud-level').textContent = 'Кон ' + lv.id + ' · ' + lv.name;
     buildHud();
@@ -275,12 +278,40 @@
     s.vx = aim.dirX * speed;
     s.vy = aim.dirY * speed;
     s.spin = aim.dirX * 3; // лёгкая закрутка при косом броске — только визуально
+    game.shot = aimInfo(s, aim);
+    Ata.hideTip();
     currentPlayer().throwsLeft--;
     game.state = 'moving';
     game.moveTime = 0;
     Sound.throwSound(aim.power);
     updateHud();
     Coach.onThrow();
+  }
+
+  /* Что было перед броском: куда смотрел прицел относительно асыков.
+     Нужно помощнику Ата, чтобы разобрать бросок. */
+  function aimInfo(s, aim) {
+    var best = null;
+    game.asyks.forEach(function (a) {
+      if (!a.active) return;
+      var rx = a.x - s.x, ry = a.y - s.y;
+      var along = rx * aim.dirX + ry * aim.dirY;
+      if (along <= 0) return;
+      var cross = aim.dirX * ry - aim.dirY * rx; // > 0 — асык правее линии прицела
+      if (!best || Math.abs(cross) < Math.abs(best.cross)) best = { cross: cross, along: along };
+    });
+    return {
+      power: aim.power,
+      dirX: aim.dirX,
+      dirY: aim.dirY,
+      startX: s.x,
+      startY: s.y,
+      noTarget: !best,
+      missSide: best && Math.abs(best.cross) > SAKA.r + ASYK.r ? (best.cross > 0 ? 'left' : 'right') : null,
+      targetAlong: best ? best.along : 0,
+      sakaHit: false,
+      firstCos: 1
+    };
   }
 
   /* ---------- ход симуляции ---------- */
@@ -293,7 +324,13 @@
       var events = game.world.step(dt);
       for (var i = 0; i < events.length; i++) {
         var ev = events[i];
-        if (ev.type === 'hit') Sound.hit(ev.strength);
+        if (ev.type === 'hit') {
+          Sound.hit(ev.strength);
+          if (game.shot && !game.shot.sakaHit && (ev.a === game.saka || ev.b === game.saka)) {
+            game.shot.sakaHit = true;
+            game.shot.firstCos = ev.cos;
+          }
+        }
         else if (ev.type === 'wall') Sound.wall(ev.strength);
       }
       if ((game.moveTime > 0.25 && game.world.isSettled()) || game.moveTime > MAX_MOVE_TIME) {
@@ -320,7 +357,26 @@
     updateHud();
 
     Coach.onSettle(knocked.length);
+    adviseAfterThrow(knocked.length);
     later(nextTurn, knocked.length ? 900 : 450);
+  }
+
+  function adviseAfterThrow(knocked) {
+    var shot = game.shot;
+    game.shot = null;
+    if (!shot || Coach.isActive()) return;
+    var s = game.saka, R = game.level.radius;
+    var left = game.asyks.filter(function (a) { return a.active; });
+    var traveled = (s.x - shot.startX) * shot.dirX + (s.y - shot.startY) * shot.dirY;
+    shot.fellShort = !shot.sakaHit && !shot.noTarget && traveled < shot.targetAlong - ASYK.r;
+    shot.knocked = knocked;
+    shot.remaining = left.length;
+    shot.nearEdge = left.filter(function (a) {
+      return Math.hypot(a.x - WORLD.ringX, a.y - WORLD.ringY) > R - 45;
+    }).length;
+    shot.throwsLeft = currentPlayer().throwsLeft;
+    shot.final = left.length === 0 || !game.players.some(function (p) { return p.throwsLeft > 0; });
+    Ata.afterThrow(shot);
   }
 
   function nextTurn() {
@@ -434,24 +490,40 @@
         if (n > 0) textEl.textContent = 'Есть! +' + n + '. Продолжай — выбей все асыки за оставшиеся броски.';
         later(function () { if (active && step === 3) finishTutorial(); }, 3500);
       },
-      reset: function () { Store.setTutorialDone(false); }
+      reset: function () { Store.setTutorialDone(false); },
+      isActive: function () { return active; }
     };
   })();
 
   /* ---------- пауза ---------- */
 
+  var menuPaused = false;   // открыто меню паузы
+  var guidePaused = false;  // открыт справочник Ата
+
+  function syncPause() {
+    game.paused = menuPaused || guidePaused;
+    if (game.paused && pointer) { pointer = null; game.aim = null; canvas.classList.remove('is-aiming'); }
+  }
+
   function pause(on) {
     if (game.state === 'over' && on) return;
-    game.paused = on;
+    menuPaused = on;
     $('modal-pause').hidden = !on;
-    if (on && pointer) { pointer = null; game.aim = null; canvas.classList.remove('is-aiming'); }
+    syncPause();
   }
+
+  Ata.init({
+    onOpen: function () { guidePaused = true; syncPause(); },
+    onClose: function () { guidePaused = false; syncPause(); }
+  });
 
   function leaveGame() {
     clearTimers();
     game.state = 'idle';
-    game.paused = false;
+    menuPaused = false;
     $('modal-pause').hidden = true;
+    syncPause();
+    Ata.hideTip();
     Coach.stop();
     toastEl.hidden = true;
   }
@@ -496,7 +568,9 @@
   });
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && $('screen-game').classList.contains('is-active')) pause(!game.paused);
+    if (e.key !== 'Escape') return;
+    if (Ata.isOpen()) { Ata.close(); return; }
+    if ($('screen-game').classList.contains('is-active')) pause(!menuPaused);
   });
 
   document.addEventListener('visibilitychange', function () {

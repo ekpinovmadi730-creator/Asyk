@@ -94,7 +94,9 @@
     a.spin += vt / a.r * 0.35;
     b.spin -= vt / b.r * 0.35;
 
-    events.push({ type: 'hit', strength: Math.min(1, -vn / 1500), a: a, b: b });
+    // cos — насколько удар прямой: 1 = точно в центр, около 0 = по касательной
+    var rel = Math.hypot(rvx, rvy);
+    events.push({ type: 'hit', strength: Math.min(1, -vn / 1500), cos: rel > 0 ? -vn / rel : 1, a: a, b: b });
   }
 
   function World(bounds) {

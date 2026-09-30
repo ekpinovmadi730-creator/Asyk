@@ -122,6 +122,128 @@
       </div>
     </section>
 
+    <!-- ===== Помощник Ата ===== -->
+    <svg class="sprite" aria-hidden="true" focusable="false">
+      <symbol id="ata-face" viewBox="0 0 64 64">
+        <!-- чапан -->
+        <path d="M10 64c2-10 10-15 22-15s20 5 22 15z" fill="#8e2a2a"/>
+        <path d="M26 50l6 9 6-9" fill="none" stroke="#f2b53a" stroke-width="2" stroke-linejoin="round"/>
+        <!-- лицо -->
+        <ellipse cx="32" cy="35" rx="13" ry="13" fill="#e2ad7e"/>
+        <ellipse cx="23.5" cy="38" rx="3" ry="2" fill="#d98a6a" opacity=".6"/>
+        <ellipse cx="40.5" cy="38" rx="3" ry="2" fill="#d98a6a" opacity=".6"/>
+        <!-- глаза-улыбки и брови -->
+        <path d="M24.5 33q2.5-2.4 5 0M34.5 33q2.5-2.4 5 0" fill="none" stroke="#3a2418" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M23 29.5q3-2 6.5-.6M34.5 28.9q3.5-1.4 6.5.6" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+        <!-- борода и усы -->
+        <path d="M19.5 37c.5 11 6 19 12.5 22 6.5-3 12-11 12.5-22-3 5-7 7.5-12.5 7.5S22.5 42 19.5 37z" fill="#f4f1ea"/>
+        <path d="M32 41.5c-3.5-1.8-7.5-.6-9.5 1.8 3.5-.4 6.5.3 9.5 2 3-1.7 6-2.4 9.5-2-2-2.4-6-3.6-9.5-1.8z" fill="#fff"/>
+        <path d="M29.5 46.5q2.5 1.4 5 0" fill="none" stroke="#8a5a40" stroke-width="1.4" stroke-linecap="round"/>
+        <!-- ақ қалпақ -->
+        <path d="M18.5 25.5L25 6.5q7-3.5 14 0l6.5 19z" fill="#fbf8f0"/>
+        <path d="M14.5 27.5q17.5-6.5 35 0l-1.6-5.2q-15.9-5.3-31.8 0z" fill="#1d1a24"/>
+        <path d="M32 21.5v-9m-3.2 2.6h6.4" stroke="#f2b53a" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M32 21.3l-2 3.2h4z" fill="#fbf8f0"/>
+      </symbol>
+    </svg>
+
+    <button class="ata-btn" id="ata-btn" type="button" aria-haspopup="dialog" aria-controls="guide" aria-label="Ата — справочник">
+      <svg class="ata-img" viewBox="0 0 64 64" aria-hidden="true"><use href="#ata-face"/></svg>
+      <span class="ata-label">Ата</span>
+    </button>
+
+    <div class="ata-tip" id="ata-tip" role="status" aria-live="polite" hidden>
+      <p class="ata-tip-text" id="ata-tip-text"></p>
+      <button class="ata-tip-close" type="button" id="ata-tip-close" aria-label="Закрыть подсказку">×</button>
+    </div>
+
+    <div class="guide" id="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title" hidden>
+      <div class="guide-card">
+        <header class="guide-head">
+          <svg class="guide-ata" viewBox="0 0 64 64" aria-hidden="true"><use href="#ata-face"/></svg>
+          <div class="guide-titles">
+            <h2 id="guide-title">Ата подскажет</h2>
+            <p>Справочник по игре асық ату</p>
+          </div>
+          <button class="icon-btn guide-close" type="button" id="guide-close" aria-label="Закрыть справочник">×</button>
+        </header>
+
+        <div class="guide-tabs" role="tablist" aria-label="Разделы справочника">
+          <button role="tab" id="tab-throw" aria-controls="gp-throw" aria-selected="true">Как бросать</button>
+          <button role="tab" id="tab-score" aria-controls="gp-score" aria-selected="false" tabindex="-1">Очки и победа</button>
+          <button role="tab" id="tab-tips" aria-controls="gp-tips" aria-selected="false" tabindex="-1">Советы</button>
+          <button role="tab" id="tab-words" aria-controls="gp-words" aria-selected="false" tabindex="-1">Словарь</button>
+          <button role="tab" id="tab-trad" aria-controls="gp-trad" aria-selected="false" tabindex="-1">Традиционные правила</button>
+        </div>
+
+        <div class="guide-body">
+          <section role="tabpanel" id="gp-throw" aria-labelledby="tab-throw" tabindex="0">
+            <ol class="rules-steps">
+              <li><span>1</span><p><b>Зажми сақа</b> — цветную биту на линии броска. Нажми на линии в другом месте, и сақа переедет туда: так выбирают угол.</p></li>
+              <li><span>2</span><p><b>Тяни назад</b>, как рогатку. Сақа полетит в противоположную сторону. Пунктир показывает направление.</p></li>
+              <li><span>3</span><p><b>Следи за дугой силы</b> вокруг сақа: зелёный — слабо, золотой — средне, красный — очень сильно.</p></li>
+              <li><span>4</span><p><b>Отпусти</b> — бросок! Если оттянуть совсем чуть-чуть, бросок отменится и не сгорит.</p></li>
+            </ol>
+            <p class="guide-note">Асыки и сақа движутся по физике: трение, удары, отскоки от бортов. Всё решает только твой бросок.</p>
+          </section>
+
+          <section role="tabpanel" id="gp-score" aria-labelledby="tab-score" tabindex="0" hidden>
+            <div class="rules-grid">
+              <div class="rule-tile"><b>+1 очко</b><p>за асык, который остановился за линией круга (его центр за линией).</p></div>
+              <div class="rule-tile"><b>Один раз</b><p>Выбитый асык убирается с поля и второй раз не считается.</p></div>
+              <div class="rule-tile"><b>5 бросков</b><p>на раунд. Победа — выбить все асыки до конца бросков.</p></div>
+              <div class="rule-tile"><b>Вдвоём</b><p>Бросаете по очереди, у каждого 5 бросков. Больше выбил — победил, поровну — ничья.</p></div>
+            </div>
+            <p class="guide-note">Каждый следующий кон открывается после победы в предыдущем. Лучшие результаты сохраняются.</p>
+          </section>
+
+          <section role="tabpanel" id="gp-tips" aria-labelledby="tab-tips" tabindex="0" hidden>
+            <ul class="guide-list">
+              <li><b>Не бей в полную силу.</b> Обычно хватает 60–80%. Слишком сильный бросок разбрасывает асыки как попало.</li>
+              <li><b>Бей вдоль ряда.</b> Встань ближе к краю линии и целься в крайний асык под углом — сақа пройдёт по ряду и собьёт несколько.</li>
+              <li><b>Целься в центр асыка.</b> Удар по касательной лишь отводит асык вбок, и он остаётся в круге.</li>
+              <li><b>Добивай одиночек у края.</b> Асык у самой линии легко выбить слабым точным броском.</li>
+            </ul>
+          </section>
+
+          <section role="tabpanel" id="gp-words" aria-labelledby="tab-words" tabindex="0" hidden>
+            <dl class="guide-dict">
+              <div><dt>асық</dt><dd>асык — таранная косточка барана, главный «инвентарь» игры</dd></div>
+              <div><dt>асық ату</dt><dd>«стрельба асыками» — название игры</dd></div>
+              <div><dt>сақа</dt><dd>бита — самый крупный и тяжёлый асык, которым бросают</dd></div>
+              <div><dt>кон</dt><dd>круг или ряд, где стоят асыки; также ставка игроков</dd></div>
+              <div><dt>алшы</dt><dd>асык лежит на боку одной стороной; считается самым удачным положением</dd></div>
+              <div><dt>тәйкі</dt><dd>асык лежит на противоположном боку</dd></div>
+              <div><dt>бүк</dt><dd>асык лежит выпуклой стороной вверх</dd></div>
+              <div><dt>шік</dt><dd>асык лежит вогнутой стороной вверх</dd></div>
+              <div><dt>сызық</dt><dd>черта, линия броска</dd></div>
+              <div><dt>ата</dt><dd>дедушка — уважительное обращение к старшему</dd></div>
+            </dl>
+          </section>
+
+          <section role="tabpanel" id="gp-trad" aria-labelledby="tab-trad" tabindex="0" hidden>
+            <p class="guide-note guide-note--top">Правила в разных регионах отличаются, но основа общая.</p>
+            <ul class="guide-list">
+              <li>На ровной земле чертят круг или линию. Каждый игрок ставит в ряд свои асыки — это ставка.</li>
+              <li>Очерёдность часто определяют, подбрасывая асык: важно, какой стороной он упадёт (алшы, тәйкі, бүк, шік).</li>
+              <li>Бросают сақа — крупный асык, нередко утяжелённый свинцом и окрашенный, — рукой с условленного расстояния.</li>
+              <li>Выбитые асыки игрок забирает себе. Пока выбивает, часто бросает снова.</li>
+              <li>Если сақа осталась в круге, игрок может потерять ход или поставить сақа в кон.</li>
+            </ul>
+            <p class="guide-note">В этой версии упрощено: нет ставок и жеребьёвки, у каждого ровно 5 бросков, нет штрафа за сақа в круге, а бросок рукой заменён оттяжкой рогаткой.</p>
+          </section>
+        </div>
+
+        <footer class="guide-foot">
+          <label class="switch">
+            <input type="checkbox" id="hints-toggle">
+            <span class="switch-track" aria-hidden="true"></span>
+            <span>Подсказки Ата после бросков</span>
+          </label>
+        </footer>
+      </div>
+    </div>
+
   </div>
 
   <script src="js/storage.js"></script>
@@ -129,6 +251,7 @@
   <script src="js/audio.js"></script>
   <script src="js/physics.js"></script>
   <script src="js/render.js"></script>
+  <script src="js/ata.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>

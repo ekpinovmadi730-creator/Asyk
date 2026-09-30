@@ -9,7 +9,7 @@
   var MAX_SCORE = 99;
 
   function defaults() {
-    return { tutorialDone: false, unlocked: 1, sound: true, best: {}, duoBest: {}, completed: {} };
+    return { tutorialDone: false, unlocked: 1, sound: true, hints: true, best: {}, duoBest: {}, completed: {} };
   }
 
   function toInt(value, min, max, fallback) {
@@ -48,6 +48,7 @@
       tutorialDone: parsed.tutorialDone === true,
       unlocked: toInt(parsed.unlocked, 1, LEVEL_COUNT, 1),
       sound: parsed.sound !== false,
+      hints: parsed.hints !== false,
       best: cleanScores(parsed.best),
       duoBest: cleanScores(parsed.duoBest),
       completed: cleanFlags(parsed.completed)
@@ -66,6 +67,8 @@
     setTutorialDone: function (done) { state.tutorialDone = !!done; write(); },
 
     setSound: function (on) { state.sound = !!on; write(); },
+
+    setHints: function (on) { state.hints = !!on; write(); },
 
     /* Возвращает true, если это новый рекорд. */
     submitScore: function (level, score, duo) {
