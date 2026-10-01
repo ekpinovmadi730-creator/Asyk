@@ -1,6 +1,6 @@
 # Асық ату
 
-> **▶ Играть онлайн:** [https://username.github.io/Asyk/](https://username.github.io/Asyk/)
+> **▶ Играть онлайн:** [https://ekpinovmadi730-creator.github.io/Asyk/](https://ekpinovmadi730-creator.github.io/Asyk/)
 
 ![Асық ату: меню, бросок на коне «Шаңырақ» и справочник Ата](docs/screenshot.png)
 
