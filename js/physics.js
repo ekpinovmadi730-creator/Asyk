@@ -25,11 +25,15 @@
     this.angle = opts.angle || 0;
     this.spin = 0;
     this.active = true;             // участвует в физике
+    this.isStatic = !!opts.isStatic; // камень: не двигается, бесконечная масса
+    this.ring = opts.ring || 0;     // к какому кону относится асык
+    this.heavy = !!opts.heavy;
   }
 
   Body.prototype.speed = function () { return Math.hypot(this.vx, this.vy); };
 
   function integrate(b, dt, bounds, events) {
+    if (b.isStatic) return;
     var s = Math.hypot(b.vx, b.vy);
     if (s > 0) {
       var ns = (s - b.friction * dt) * (1 - AIR_DAMP * dt);
@@ -53,10 +57,11 @@
     var vn = axis === 'x' ? b.vx : b.vy;
     if (axis === 'x') { b.vx = -b.vx * WALL_E; b.vy *= 0.92; b.spin += b.vy / b.r * 0.2; }
     else { b.vy = -b.vy * WALL_E; b.vx *= 0.92; b.spin -= b.vx / b.r * 0.2; }
-    if (Math.abs(vn) > 60) events.push({ type: 'wall', strength: Math.min(1, Math.abs(vn) / 1400) });
+    if (Math.abs(vn) > 60) events.push({ type: 'wall', strength: Math.min(1, Math.abs(vn) / 1400), b: b });
   }
 
   function collide(a, b, events) {
+    if (a.isStatic && b.isStatic) return;
     var dx = b.x - a.x, dy = b.y - a.y;
     var minDist = a.r + b.r;
     var d2 = dx * dx + dy * dy;
@@ -66,7 +71,7 @@
     if (dist < 1e-6) { nx = 1; ny = 0; dist = 1e-6; }
     else { nx = dx / dist; ny = dy / dist; }
 
-    var ia = 1 / a.m, ib = 1 / b.m, isum = ia + ib;
+    var ia = a.isStatic ? 0 : 1 / a.m, ib = b.isStatic ? 0 : 1 / b.m, isum = ia + ib;
 
     // разводим пересекающиеся круги пропорционально массам
     var overlap = minDist - dist;
@@ -106,6 +111,18 @@
   }
 
   World.prototype.add = function (body) { this.bodies.push(body); return body; };
+
+  /* Полная копия мира: для повтора броска и для расчётов компьютера.
+     Тела копируются в том же порядке. */
+  World.prototype.clone = function () {
+    var w = new World(this.bounds);
+    this.bodies.forEach(function (b) {
+      var c = Object.create(Body.prototype);
+      for (var k in b) if (Object.prototype.hasOwnProperty.call(b, k)) c[k] = b[k];
+      w.bodies.push(c);
+    });
+    return w;
+  };
 
   World.prototype.step = function (frameDt) {
     var events = [];

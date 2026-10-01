@@ -50,7 +50,7 @@
 
   /* ---------- статичный фон поля (кэшируется) ---------- */
 
-  function buildBoard(level, scale) {
+  function buildBoard(level, scale, label) {
     var W = WORLD.W, H = WORLD.H, WALL = WORLD.WALL;
     var cv = document.createElement('canvas');
     cv.width = Math.max(1, Math.round(W * scale));
@@ -92,16 +92,23 @@
     ctx.save();
     roundRect(ctx, gx, gy, gw, gh, 14);
     ctx.clip();
-    var ground = ctx.createRadialGradient(WORLD.ringX, WORLD.ringY, 60, WORLD.ringX, WORLD.ringY + 200, 1100);
-    ground.addColorStop(0, '#d8b27a');
-    ground.addColorStop(0.55, '#c49660');
-    ground.addColorStop(1, '#9c7143');
+    var c0 = level.rings[0];
+    var ground = ctx.createRadialGradient(W / 2, c0.y, 60, W / 2, c0.y + 200, 1100);
+    if (level.sand) {
+      ground.addColorStop(0, '#ecd29a');
+      ground.addColorStop(0.55, '#dcb877');
+      ground.addColorStop(1, '#b98f55');
+    } else {
+      ground.addColorStop(0, '#d8b27a');
+      ground.addColorStop(0.55, '#c49660');
+      ground.addColorStop(1, '#9c7143');
+    }
     ctx.fillStyle = ground;
     ctx.fillRect(gx, gy, gw, gh);
 
     // зерно и камушки
-    var rand = rng(1337 + level.id * 97);
-    for (i = 0; i < 2600; i++) {
+    var rand = rng(1337 + (typeof level.id === 'number' ? level.id : 11) * 97);
+    for (i = 0; i < (level.sand ? 5200 : 2600); i++) {
       var px = gx + rand() * gw, py = gy + rand() * gh;
       var r = rand() * 2.2 + 0.4;
       ctx.fillStyle = rand() < 0.5 ? 'rgba(90, 60, 30, 0.16)' : 'rgba(255, 240, 210, 0.14)';
@@ -132,6 +139,27 @@
     vig.addColorStop(1, 'rgba(40, 20, 5, 0.35)');
     ctx.fillStyle = vig;
     ctx.fillRect(gx, gy, gw, gh);
+
+    // время суток: закат теплее, ночь — синяя с лунным светом
+    if (level.time === 'sunset') {
+      var sun = ctx.createLinearGradient(0, gy, 0, gy + gh);
+      sun.addColorStop(0, 'rgba(240, 110, 50, 0.26)');
+      sun.addColorStop(1, 'rgba(150, 40, 60, 0.18)');
+      ctx.fillStyle = sun;
+      ctx.fillRect(gx, gy, gw, gh);
+    } else if (level.time === 'night') {
+      // «умножаем» на синий — земля темнеет и синеет, а не сереет
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = 'rgb(105, 125, 200)';
+      ctx.fillRect(gx, gy, gw, gh);
+      ctx.globalCompositeOperation = 'screen';
+      var moon = ctx.createRadialGradient(W * 0.72, gy + 80, 20, W * 0.6, gy + 300, 900);
+      moon.addColorStop(0, 'rgba(120, 150, 230, 0.35)');
+      moon.addColorStop(1, 'rgba(120, 150, 230, 0)');
+      ctx.fillStyle = moon;
+      ctx.fillRect(gx, gy, gw, gh);
+      ctx.globalCompositeOperation = 'source-over';
+    }
     ctx.restore();
 
     // внутренняя тень рамки
@@ -146,13 +174,39 @@
     ctx.stroke();
     ctx.restore();
 
-    drawRing(ctx, level.radius);
-    drawLaunchLine(ctx);
+    level.rings.forEach(function (r) { drawRing(ctx, r); });
+    (level.stones || []).forEach(function (st) { drawStone(ctx, st); });
+    drawLaunchLine(ctx, label);
     return cv;
   }
 
-  function drawRing(ctx, R) {
-    var cx = WORLD.ringX, cy = WORLD.ringY;
+  function drawStone(ctx, st) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(30, 20, 10, 0.4)';
+    ctx.beginPath(); ctx.ellipse(st.x + 6, st.y + 9, st.r * 1.05, st.r * 0.9, 0, 0, Math.PI * 2); ctx.fill();
+    var g = ctx.createRadialGradient(st.x - st.r * 0.4, st.y - st.r * 0.5, 3, st.x, st.y, st.r * 1.2);
+    g.addColorStop(0, '#b9b3a8');
+    g.addColorStop(0.6, '#7d766c');
+    g.addColorStop(1, '#4a443d');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    for (var i = 0; i <= 10; i++) {
+      var a = (i / 10) * Math.PI * 2;
+      var rr = st.r * (0.9 + 0.1 * Math.sin(a * 3 + st.x));
+      var px = st.x + Math.cos(a) * rr, py = st.y + Math.sin(a) * rr;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(st.x - st.r * 0.25, st.y - st.r * 0.3, st.r * 0.45, Math.PI * 1.1, Math.PI * 1.7); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawRing(ctx, ring) {
+    var cx = ring.x, cy = ring.y, R = ring.r;
+    var k = Math.min(1, R / 280);
     ctx.save();
     // утоптанная земля внутри кона
     var inner = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
@@ -164,11 +218,11 @@
     // шаңырақ в центре
     ctx.strokeStyle = 'rgba(90, 55, 25, 0.22)';
     ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(cx, cy, 70, 0, Math.PI * 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(cx, cy, 58, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 70 * k, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, 58 * k, 0, Math.PI * 2); ctx.stroke();
     for (var s = -1; s <= 1; s += 2) {
-      ctx.beginPath(); ctx.arc(cx + s * 30, cy, 50, Math.PI * 0.62, Math.PI * 1.38); ctx.stroke();
-      ctx.beginPath(); ctx.arc(cx, cy + s * 30, 50, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + s * 30 * k, cy, 50 * k, Math.PI * 0.62, Math.PI * 1.38); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy + s * 30 * k, 50 * k, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
     }
 
     // линия кона — мел
@@ -196,7 +250,7 @@
     ctx.restore();
   }
 
-  function drawLaunchLine(ctx) {
+  function drawLaunchLine(ctx, label) {
     var y = WORLD.launchY;
     var x0 = WORLD.WALL + 40, x1 = WORLD.W - WORLD.WALL - 40;
     ctx.save();
@@ -210,7 +264,7 @@
     ctx.fillStyle = 'rgba(255, 248, 230, 0.55)';
     ctx.font = '600 24px Nunito, "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('сызық — линия броска', WORLD.W / 2, y + WORLD.launchBand - 18);
+    ctx.fillText(label || '', WORLD.W / 2, y + WORLD.launchBand - 18);
     ctx.restore();
   }
 
@@ -279,6 +333,8 @@
   }
 
   var ASYK_PALETTE = ['#fffaf0', '#efe0bd', '#c9ad78', 'rgba(110, 80, 40, 0.45)', 'rgba(120, 88, 40, 0.3)'];
+  // тяжёлый асык — старый, потемневший, с «свинцовым» блеском
+  var HEAVY_PALETTE = ['#f1d9b0', '#b98a55', '#6e4a28', 'rgba(50, 30, 10, 0.6)', 'rgba(40, 40, 50, 0.55)'];
 
   function sakaPalette(color) {
     return color === 'p2'
@@ -429,9 +485,11 @@
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     if (!g.level) return;
 
-    if (!this.board || this.boardLevel !== g.level) {
-      this.board = buildBoard(g.level, k);
+    var label = g.labels.launch;
+    if (!this.board || this.boardLevel !== g.level || this.boardLabel !== label) {
+      this.board = buildBoard(g.level, k, label);
       this.boardLevel = g.level;
+      this.boardLabel = label;
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(this.board, Math.round(this.ox * this.dpr), Math.round(this.oy * this.dpr));
@@ -444,7 +502,7 @@
       a = g.asyks[i];
       if (!a.active) continue;
       var outside = g.isOutside(a);
-      drawBone(ctx, a, ASYK_PALETTE, 1, outside ? 'rgba(247, 210, 124, 0.95)' : null);
+      drawBone(ctx, a, a.heavy ? HEAVY_PALETTE : ASYK_PALETTE, 1, outside ? 'rgba(247, 210, 124, 0.95)' : null);
     }
     // выбитые — улетают и тают
     for (i = 0; i < g.fading.length; i++) {
@@ -452,13 +510,37 @@
       var p = Math.max(0, Math.min(1, f.t / f.dur));
       var e = 1 - Math.pow(1 - p, 3);
       var fx = f.x + (f.tx - f.x) * e, fy = f.y + (f.ty - f.y) * e;
-      drawBone(ctx, { x: fx, y: fy, r: f.r * (1 - 0.4 * e), angle: f.angle + e * 6 }, ASYK_PALETTE, 1 - p * 0.8, 'rgba(247, 210, 124, 0.9)');
+      drawBone(ctx, { x: fx, y: fy, r: f.r * (1 - 0.4 * e), angle: f.angle + e * 6 }, f.heavy ? HEAVY_PALETTE : ASYK_PALETTE, 1 - p * 0.8, 'rgba(247, 210, 124, 0.9)');
+    }
+
+    // след за летящей сақа
+    if (g.trail.length > 1) {
+      var tc = g.currentColor() === 'p2' ? '224, 82, 74' : '0, 167, 194';
+      for (i = 1; i < g.trail.length; i++) {
+        var q0 = i / g.trail.length;
+        ctx.strokeStyle = 'rgba(' + tc + ',' + (q0 * 0.45).toFixed(3) + ')';
+        ctx.lineWidth = g.saka.r * 1.3 * q0;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(g.trail[i - 1].x, g.trail[i - 1].y);
+        ctx.lineTo(g.trail[i].x, g.trail[i].y);
+        ctx.stroke();
+      }
     }
 
     if (g.saka && g.saka.active) {
       if (g.state === 'aim' && g.showGhost && !g.aim) drawGhost(ctx, g.saka, t);
       drawBone(ctx, g.saka, sakaPalette(g.currentColor()), 1, g.state === 'aim' && !g.aim ? 'rgba(255,255,255,0.35)' : null);
       if (g.state === 'aim') drawAim(ctx, g.saka, g.aim, t);
+      if (g.botThinking) drawThinking(ctx, g.saka, t);
+    }
+
+    // пыль от ударов
+    for (i = 0; i < g.particles.length; i++) {
+      var d = g.particles[i];
+      var life = 1 - d.t / d.dur;
+      ctx.fillStyle = 'rgba(' + d.color + ',' + (life * d.alpha).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(d.x, d.y, d.size * (1.4 - life * 0.4), 0, Math.PI * 2); ctx.fill();
     }
 
     // всплывающие очки
@@ -474,7 +556,34 @@
       ctx.fillText(pu.text, pu.x, pu.y - q * 90);
     }
     ctx.globalAlpha = 1;
+
+    if (g.state === 'replay') drawReplayBanner(ctx, g.labels.replay, t);
   };
+
+  function drawThinking(ctx, saka, t) {
+    ctx.save();
+    for (var i = 0; i < 3; i++) {
+      var a = 0.35 + 0.65 * Math.max(0, Math.sin(t * 6 - i * 0.8));
+      ctx.fillStyle = 'rgba(255, 248, 230,' + a.toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(saka.x - 26 + i * 26, saka.y - saka.r - 34, 8, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawReplayBanner(ctx, text, t) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(5, 10, 25, 0.55)';
+    ctx.fillRect(WORLD.WALL, WORLD.WALL, WORLD.W - WORLD.WALL * 2, 70);
+    ctx.fillRect(WORLD.WALL, WORLD.H - WORLD.WALL - 70, WORLD.W - WORLD.WALL * 2, 70);
+    ctx.fillStyle = Math.sin(t * 5) > 0 ? '#ff5a4d' : 'rgba(255, 90, 77, 0.35)';
+    ctx.beginPath(); ctx.arc(WORLD.W / 2 - 110, WORLD.WALL + 35, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = '700 36px Philosopher, Georgia, serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, WORLD.W / 2 - 88, WORLD.WALL + 37);
+    ctx.restore();
+  }
 
   window.AsykRenderer = Renderer;
 })();

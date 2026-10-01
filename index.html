@@ -4,15 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="theme-color" content="#14213d">
   <meta name="description" content="Асық ату — казахская национальная игра в асыки в браузере.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Асық ату">
   <title>Асық ату</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Philosopher:wght@400;700&family=Nunito:wght@400;600;800&display=swap">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2314213d'/%3E%3Cpath d='M18 26c0-6 6-8 10-5 3 2 5 2 8 0 4-3 10-1 10 5 0 3-2 5-2 6s2 3 2 6c0 6-6 8-10 5-3-2-5-2-8 0-4 3-10 1-10-5 0-3 2-5 2-6s-2-3-2-6z' fill='%23f1e3c3'/%3E%3C/svg%3E">
 </head>
 <body>
   <div id="app">
@@ -21,15 +28,23 @@
     <section id="screen-menu" class="screen screen--menu is-active" aria-labelledby="menu-title">
       <div class="menu-card">
         <div class="ornament-strip" aria-hidden="true"></div>
-        <p class="menu-kicker">Қазақтың ұлттық ойыны</p>
+        <p class="menu-kicker" data-i18n="menu.kicker">Қазақтың ұлттық ойыны</p>
         <h1 id="menu-title" class="menu-title">Асық ату</h1>
         <div class="menu-asyks" aria-hidden="true">
           <span class="mini-asyk"></span><span class="mini-asyk"></span><span class="mini-asyk mini-asyk--saka"></span><span class="mini-asyk"></span><span class="mini-asyk"></span>
         </div>
         <nav class="menu-buttons">
-          <button class="btn btn--primary" data-action="play">Играть</button>
-          <button class="btn btn--secondary" data-action="duo">Вдвоём</button>
-          <button class="btn btn--ghost" data-action="rules">Правила</button>
+          <button class="btn btn--primary btn--big" data-action="play" data-i18n="menu.play">Играть</button>
+          <div class="menu-grid">
+            <button class="btn btn--secondary" data-action="duo" data-i18n="menu.duo">Вдвоём</button>
+            <button class="btn btn--secondary" data-action="bot" data-i18n="menu.bot">С компьютером</button>
+            <button class="btn btn--ghost" data-action="daily" data-i18n="menu.daily">Кон дня</button>
+            <button class="btn btn--ghost" data-action="rules" data-i18n="menu.rules">Правила</button>
+          </div>
+          <div class="menu-row">
+            <button class="btn btn--ghost btn--small" data-action="achievements"><span aria-hidden="true">🏆 </span><span data-i18n="menu.achievements">Достижения</span></button>
+            <button class="btn btn--ghost btn--small" data-action="settings"><span aria-hidden="true">⚙ </span><span data-i18n="menu.settings">Настройки</span></button>
+          </div>
         </nav>
         <p class="menu-progress" id="menu-progress"></p>
         <div class="ornament-strip ornament-strip--bottom" aria-hidden="true"></div>
@@ -38,13 +53,31 @@
 
     <!-- ===== Выбор уровня ===== -->
     <section id="screen-levels" class="screen screen--panel" aria-labelledby="levels-title">
-      <div class="panel">
+      <div class="panel panel--scroll">
         <header class="panel-head">
-          <button class="icon-btn" data-action="menu" aria-label="Назад в меню">←</button>
-          <h2 id="levels-title">Выбери кон</h2>
+          <button class="icon-btn" data-action="menu" data-i18n-aria="common.back" aria-label="Назад в меню">←</button>
+          <h2 id="levels-title" data-i18n="levels.title">Выбери кон</h2>
           <span class="panel-mode" id="levels-mode"></span>
         </header>
-        <div class="level-list" id="level-list"></div>
+        <div class="panel-scroll">
+          <div class="level-options">
+            <div class="seg-wrap" id="bot-level-wrap" hidden>
+              <span class="seg-label" id="bot-level-label" data-i18n="levels.botLevel">Сложность</span>
+              <div class="seg" role="radiogroup" id="bot-level" aria-labelledby="bot-level-label">
+                <button type="button" role="radio" data-bot="easy" data-i18n="bot.easy">Лёгкий</button>
+                <button type="button" role="radio" data-bot="medium" data-i18n="bot.medium">Средний</button>
+                <button type="button" role="radio" data-bot="hard" data-i18n="bot.hard">Сложный</button>
+              </div>
+            </div>
+            <label class="switch switch--row">
+              <input type="checkbox" id="trad-toggle">
+              <span class="switch-track" aria-hidden="true"></span>
+              <span data-i18n="levels.trad">Традиционные правила</span>
+            </label>
+            <p class="level-hint" data-i18n="levels.tradHint"></p>
+          </div>
+          <div class="level-list" id="level-list"></div>
+        </div>
       </div>
     </section>
 
@@ -52,34 +85,64 @@
     <section id="screen-rules" class="screen screen--panel" aria-labelledby="rules-title">
       <div class="panel panel--scroll">
         <header class="panel-head">
-          <button class="icon-btn" data-action="menu" aria-label="Назад в меню">←</button>
-          <h2 id="rules-title">Правила</h2>
+          <button class="icon-btn" data-action="menu" data-i18n-aria="common.back" aria-label="Назад в меню">←</button>
+          <h2 id="rules-title" data-i18n="rules.title">Правила</h2>
           <span></span>
         </header>
-        <div class="rules">
-          <p class="rules-lead">На земле рисуют круг — <b>кон</b>. В центре в ряд ставят асыки. Игрок бросает свою биту — <b>сақа</b> — и старается выбить асыки за линию круга.</p>
-          <ol class="rules-steps">
-            <li><span>1</span><p><b>Зажми сақа</b> пальцем или мышью. Можно нажать в любом месте линии броска — сақа переедет туда.</p></li>
-            <li><span>2</span><p><b>Тяни назад</b>, как рогатку. Линия прицела показывает направление, шкала вокруг сақа — силу.</p></li>
-            <li><span>3</span><p><b>Отпусти</b> — сақа полетит. Отпустишь слишком близко — бросок отменится и не сгорит.</p></li>
-          </ol>
-          <div class="rules-grid">
-            <div class="rule-tile"><b>+1 очко</b><p>за каждый асык, который остановился за линией круга (его центр за линией). Каждый асык считается один раз.</p></div>
-            <div class="rule-tile"><b>5 бросков</b><p>на раунд. Победа — выбить все асыки до конца бросков.</p></div>
-            <div class="rule-tile"><b>Вдвоём</b><p>игроки бросают по очереди на одном поле, у каждого 5 бросков. Побеждает тот, кто выбил больше.</p></div>
-            <div class="rule-tile"><b>3 кона</b><p>Каждый следующий открывается после победы в предыдущем и сложнее: больше асыков, шире круг.</p></div>
+        <div class="panel-scroll rules">
+          <div data-lang="ru">
+            <p class="rules-lead">На земле рисуют круг — <b>кон</b>. В центре в ряд ставят асыки. Игрок бросает свою биту — <b>сақа</b> — и старается выбить асыки за линию круга.</p>
+            <ol class="rules-steps">
+              <li><span>1</span><p><b>Зажми сақа</b> пальцем или мышью. Можно нажать в любом месте линии броска — сақа переедет туда.</p></li>
+              <li><span>2</span><p><b>Тяни назад</b>, как рогатку. Линия прицела показывает направление, шкала вокруг сақа — силу.</p></li>
+              <li><span>3</span><p><b>Отпусти</b> — сақа полетит. Отпустишь слишком близко — бросок отменится и не сгорит.</p></li>
+            </ol>
+            <div class="rules-grid">
+              <div class="rule-tile"><b>+1 очко</b><p>за каждый асык, который остановился за линией круга (его центр за линией). Каждый асык считается один раз.</p></div>
+              <div class="rule-tile"><b>5 бросков</b><p>на раунд. Победа — выбить все асыки до конца бросков.</p></div>
+              <div class="rule-tile"><b>Вдвоём и с компьютером</b><p>бросаете по очереди на одном поле, у каждого 5 бросков. Побеждает тот, кто выбил больше.</p></div>
+              <div class="rule-tile"><b>7 конов</b><p>Каждый открывается после победы в предыдущем: песок, тяжёлые асыки, камни, два кона.</p></div>
+            </div>
           </div>
-          <button class="btn btn--ghost btn--small" data-action="replay-tutorial">Пройти обучение заново</button>
+          <div data-lang="kk">
+            <p class="rules-lead">Жерге шеңбер — <b>кон</b> сызылады. Ортасына асықтар қатар қойылады. Ойыншы өз сақасын лақтырып, асықтарды шеңбер сызығынан шығаруға тырысады.</p>
+            <ol class="rules-steps">
+              <li><span>1</span><p><b>Сақаны басып ұста</b> — саусақпен немесе тінтуірмен. Лақтыру сызығының кез келген жерін бассаң, сақа сонда көшеді.</p></li>
+              <li><span>2</span><p><b>Кері тарт</b> — рогатка сияқты. Үзік сызық бағытты, сақа айналасындағы доға күшті көрсетеді.</p></li>
+              <li><span>3</span><p><b>Жібер</b> — сақа ұшады. Тым аз тартсаң, лақтыру болмайды және күймейді.</p></li>
+            </ol>
+            <div class="rules-grid">
+              <div class="rule-tile"><b>+1 ұпай</b><p>шеңбер сызығынан тыс тоқтаған әр асық үшін (ортасы сызықтан тыс). Әр асық бір рет қана есептеледі.</p></div>
+              <div class="rule-tile"><b>5 лақтыру</b><p>бір раундқа. Жеңіс — лақтыру біткенше барлық асықты шығару.</p></div>
+              <div class="rule-tile"><b>Екеулеп және компьютермен</b><p>бір алаңда кезекпен лақтырасыңдар, әркімде 5 лақтыру. Көп шығарған жеңеді.</p></div>
+              <div class="rule-tile"><b>7 кон</b><p>Әрқайсысы алдыңғысын жеңгенде ашылады: құм, ауыр асықтар, тастар, екі кон.</p></div>
+            </div>
+          </div>
+          <button class="btn btn--ghost btn--small" data-action="replay-tutorial" data-i18n="rules.replay">Пройти обучение заново</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Достижения ===== -->
+    <section id="screen-ach" class="screen screen--panel" aria-labelledby="ach-title">
+      <div class="panel panel--scroll">
+        <header class="panel-head">
+          <button class="icon-btn" data-action="menu" data-i18n-aria="common.back" aria-label="Назад в меню">←</button>
+          <h2 id="ach-title" data-i18n="ach.title">Достижения</h2>
+          <span class="panel-mode" id="ach-count"></span>
+        </header>
+        <div class="panel-scroll">
+          <ul class="ach-list" id="ach-list"></ul>
         </div>
       </div>
     </section>
 
     <!-- ===== Игра ===== -->
-    <section id="screen-game" class="screen screen--game" aria-label="Игровое поле">
+    <section id="screen-game" class="screen screen--game" aria-label="Асық ату">
       <header class="hud">
-        <button class="icon-btn icon-btn--hud" data-action="pause" aria-label="Пауза">☰</button>
+        <button class="icon-btn icon-btn--hud" data-action="pause" data-i18n-aria="hud.pause" aria-label="Пауза">☰</button>
         <div class="hud-players" id="hud-players"></div>
-        <button class="icon-btn icon-btn--hud" data-action="sound" id="btn-sound" aria-label="Звук">♪</button>
+        <button class="icon-btn icon-btn--hud" data-action="sound" id="btn-sound" data-i18n-aria="hud.sound" aria-label="Звук">♪</button>
       </header>
       <div class="hud-sub">
         <span id="hud-level"></span>
@@ -88,6 +151,7 @@
       <div class="stage" id="stage">
         <canvas id="board"></canvas>
         <div class="toast" id="toast" hidden></div>
+        <button class="replay-btn" id="replay-btn" type="button" data-i18n="replay.button" hidden>▶ Повтор</button>
         <div class="coach" id="coach" hidden>
           <p class="coach-step" id="coach-step"></p>
           <p class="coach-text" id="coach-text"></p>
@@ -97,27 +161,47 @@
 
       <div class="modal" id="modal-pause" hidden>
         <div class="modal-card">
-          <h3>Пауза</h3>
-          <button class="btn btn--primary" data-action="resume">Продолжить</button>
-          <button class="btn btn--secondary" data-action="restart">Начать кон заново</button>
-          <button class="btn btn--ghost" data-action="menu">В меню</button>
+          <h3 data-i18n="pause.title">Пауза</h3>
+          <button class="btn btn--primary" data-action="resume" data-i18n="pause.resume">Продолжить</button>
+          <button class="btn btn--secondary" data-action="restart" data-i18n="pause.restart">Начать кон заново</button>
+          <button class="btn btn--ghost" data-action="settings" data-i18n="pause.settings">Настройки</button>
+          <button class="btn btn--ghost" data-action="menu" data-i18n="pause.menu">В меню</button>
+        </div>
+      </div>
+
+      <div class="modal toss" id="toss" hidden>
+        <div class="modal-card toss-card">
+          <h3 data-i18n="toss.title">Жеребьёвка</h3>
+          <p class="toss-hint" id="toss-hint"></p>
+          <div class="toss-rows" id="toss-rows"></div>
+          <button class="btn btn--primary" id="toss-btn" type="button"></button>
         </div>
       </div>
     </section>
 
     <!-- ===== Результат ===== -->
     <section id="screen-result" class="screen screen--panel" aria-labelledby="result-title">
-      <div class="panel panel--result">
-        <div class="ornament-strip" aria-hidden="true"></div>
-        <p class="result-kicker" id="result-kicker"></p>
-        <h2 id="result-title" class="result-title"></h2>
-        <p class="result-score" id="result-score"></p>
-        <div class="result-table" id="result-table"></div>
-        <p class="result-best" id="result-best"></p>
-        <div class="result-buttons">
-          <button class="btn btn--primary" data-action="again">Играть снова</button>
-          <button class="btn btn--secondary" data-action="next" id="btn-next" hidden>Следующий кон</button>
-          <button class="btn btn--ghost" data-action="menu">В меню</button>
+      <div class="panel panel--result panel--scroll">
+        <div class="panel-scroll">
+          <div class="ornament-strip" aria-hidden="true"></div>
+          <p class="result-kicker" id="result-kicker"></p>
+          <h2 id="result-title" class="result-title"></h2>
+          <div class="result-stars" id="result-stars" hidden>
+            <span class="star"></span><span class="star"></span><span class="star"></span>
+          </div>
+          <p class="result-stars-hint" id="result-stars-hint" data-i18n="result.starsHint" hidden></p>
+          <p class="result-score" id="result-score"></p>
+          <div class="result-table" id="result-table"></div>
+          <p class="result-best" id="result-best"></p>
+          <div class="result-ach" id="result-ach" hidden>
+            <p class="result-ach-title" data-i18n="result.achTitle">Новые достижения</p>
+            <ul id="result-ach-list"></ul>
+          </div>
+          <div class="result-buttons">
+            <button class="btn btn--primary" data-action="again" data-i18n="result.again">Играть снова</button>
+            <button class="btn btn--secondary" data-action="next" id="btn-next" data-i18n="result.next" hidden>Следующий кон</button>
+            <button class="btn btn--ghost" data-action="menu" data-i18n="result.menu">В меню</button>
+          </div>
         </div>
       </div>
     </section>
@@ -147,67 +231,103 @@
       </symbol>
     </svg>
 
-    <button class="ata-btn" id="ata-btn" type="button" aria-haspopup="dialog" aria-controls="guide" aria-label="Ата — справочник">
+    <button class="ata-btn" id="ata-btn" type="button" aria-haspopup="dialog" aria-controls="guide" data-i18n-aria="guide.btn" aria-label="Ата — справочник">
       <svg class="ata-img" viewBox="0 0 64 64" aria-hidden="true"><use href="#ata-face"/></svg>
       <span class="ata-label">Ата</span>
     </button>
 
     <div class="ata-tip" id="ata-tip" role="status" aria-live="polite" hidden>
       <p class="ata-tip-text" id="ata-tip-text"></p>
-      <button class="ata-tip-close" type="button" id="ata-tip-close" aria-label="Закрыть подсказку">×</button>
+      <button class="ata-tip-close" type="button" id="ata-tip-close" data-i18n-aria="guide.tipClose" aria-label="Закрыть подсказку">×</button>
     </div>
 
+    <div class="ach-toast" id="ach-toast" role="status" aria-live="polite" hidden>
+      <span class="ach-toast-icon" aria-hidden="true">🏆</span>
+      <span id="ach-toast-text"></span>
+    </div>
+
+    <!-- справочник -->
     <div class="guide" id="guide" role="dialog" aria-modal="true" aria-labelledby="guide-title" hidden>
       <div class="guide-card">
         <header class="guide-head">
           <svg class="guide-ata" viewBox="0 0 64 64" aria-hidden="true"><use href="#ata-face"/></svg>
           <div class="guide-titles">
-            <h2 id="guide-title">Ата подскажет</h2>
-            <p>Справочник по игре асық ату</p>
+            <h2 id="guide-title" data-i18n="guide.title">Ата подскажет</h2>
+            <p data-i18n="guide.sub">Справочник по игре асық ату</p>
           </div>
-          <button class="icon-btn guide-close" type="button" id="guide-close" aria-label="Закрыть справочник">×</button>
+          <button class="icon-btn guide-close" type="button" id="guide-close" data-i18n-aria="common.close" aria-label="Закрыть">×</button>
         </header>
 
-        <div class="guide-tabs" role="tablist" aria-label="Разделы справочника">
-          <button role="tab" id="tab-throw" aria-controls="gp-throw" aria-selected="true">Как бросать</button>
-          <button role="tab" id="tab-score" aria-controls="gp-score" aria-selected="false" tabindex="-1">Очки и победа</button>
-          <button role="tab" id="tab-tips" aria-controls="gp-tips" aria-selected="false" tabindex="-1">Советы</button>
-          <button role="tab" id="tab-words" aria-controls="gp-words" aria-selected="false" tabindex="-1">Словарь</button>
-          <button role="tab" id="tab-trad" aria-controls="gp-trad" aria-selected="false" tabindex="-1">Традиционные правила</button>
+        <div class="guide-tabs" role="tablist">
+          <button role="tab" id="tab-throw" aria-controls="gp-throw" aria-selected="true" data-i18n="guide.tabThrow">Как бросать</button>
+          <button role="tab" id="tab-score" aria-controls="gp-score" aria-selected="false" tabindex="-1" data-i18n="guide.tabScore">Очки и победа</button>
+          <button role="tab" id="tab-tips" aria-controls="gp-tips" aria-selected="false" tabindex="-1" data-i18n="guide.tabTips">Советы</button>
+          <button role="tab" id="tab-words" aria-controls="gp-words" aria-selected="false" tabindex="-1" data-i18n="guide.tabWords">Словарь</button>
+          <button role="tab" id="tab-trad" aria-controls="gp-trad" aria-selected="false" tabindex="-1" data-i18n="guide.tabTrad">Традиционные правила</button>
         </div>
 
         <div class="guide-body">
           <section role="tabpanel" id="gp-throw" aria-labelledby="tab-throw" tabindex="0">
-            <ol class="rules-steps">
-              <li><span>1</span><p><b>Зажми сақа</b> — цветную биту на линии броска. Нажми на линии в другом месте, и сақа переедет туда: так выбирают угол.</p></li>
-              <li><span>2</span><p><b>Тяни назад</b>, как рогатку. Сақа полетит в противоположную сторону. Пунктир показывает направление.</p></li>
-              <li><span>3</span><p><b>Следи за дугой силы</b> вокруг сақа: зелёный — слабо, золотой — средне, красный — очень сильно.</p></li>
-              <li><span>4</span><p><b>Отпусти</b> — бросок! Если оттянуть совсем чуть-чуть, бросок отменится и не сгорит.</p></li>
-            </ol>
-            <p class="guide-note">Асыки и сақа движутся по физике: трение, удары, отскоки от бортов. Всё решает только твой бросок.</p>
+            <div data-lang="ru">
+              <ol class="rules-steps">
+                <li><span>1</span><p><b>Зажми сақа</b> — цветную биту на линии броска. Нажми на линии в другом месте, и сақа переедет туда: так выбирают угол.</p></li>
+                <li><span>2</span><p><b>Тяни назад</b>, как рогатку. Сақа полетит в противоположную сторону. Пунктир показывает направление.</p></li>
+                <li><span>3</span><p><b>Следи за дугой силы</b> вокруг сақа: зелёный — слабо, золотой — средне, красный — очень сильно.</p></li>
+                <li><span>4</span><p><b>Отпусти</b> — бросок! Если оттянуть совсем чуть-чуть, бросок отменится и не сгорит.</p></li>
+              </ol>
+              <p class="guide-note">Асыки и сақа движутся по физике: трение, удары, отскоки от бортов. Всё решает только твой бросок. После красивого броска можно посмотреть повтор.</p>
+            </div>
+            <div data-lang="kk">
+              <ol class="rules-steps">
+                <li><span>1</span><p><b>Сақаны басып ұста</b> — лақтыру сызығындағы түсті асық. Сызықтың басқа жерін бассаң, сақа сонда көшеді: солай бұрыш таңдайды.</p></li>
+                <li><span>2</span><p><b>Кері тарт</b> — рогатка сияқты. Сақа қарама-қарсы жаққа ұшады. Үзік сызық бағытты көрсетеді.</p></li>
+                <li><span>3</span><p><b>Күш доғасын бақыла</b>: жасыл — әлсіз, алтын — орташа, қызыл — өте күшті.</p></li>
+                <li><span>4</span><p><b>Жібер</b> — лақтыр! Сәл ғана тартсаң, лақтыру болмайды және күймейді.</p></li>
+              </ol>
+              <p class="guide-note">Асықтар мен сақа физика бойынша қозғалады: үйкеліс, соқтығыс, жиектен серпілу. Бәрін тек сенің лақтыруың шешеді. Әдемі лақтырудан кейін қайталауын көруге болады.</p>
+            </div>
           </section>
 
           <section role="tabpanel" id="gp-score" aria-labelledby="tab-score" tabindex="0" hidden>
-            <div class="rules-grid">
-              <div class="rule-tile"><b>+1 очко</b><p>за асык, который остановился за линией круга (его центр за линией).</p></div>
-              <div class="rule-tile"><b>Один раз</b><p>Выбитый асык убирается с поля и второй раз не считается.</p></div>
-              <div class="rule-tile"><b>5 бросков</b><p>на раунд. Победа — выбить все асыки до конца бросков.</p></div>
-              <div class="rule-tile"><b>Вдвоём</b><p>Бросаете по очереди, у каждого 5 бросков. Больше выбил — победил, поровну — ничья.</p></div>
+            <div data-lang="ru">
+              <div class="rules-grid">
+                <div class="rule-tile"><b>+1 очко</b><p>за асык, который остановился за линией круга (его центр за линией).</p></div>
+                <div class="rule-tile"><b>Один раз</b><p>Выбитый асык убирается с поля и второй раз не считается.</p></div>
+                <div class="rule-tile"><b>5 бросков</b><p>на раунд. Победа — выбить все асыки до конца бросков.</p></div>
+                <div class="rule-tile"><b>Вдвоём</b><p>Бросаете по очереди, у каждого 5 бросков. Больше выбил — победил, поровну — ничья.</p></div>
+              </div>
+              <p class="guide-note">Звёзды: ★ — победа, ★★ — победа за 4 броска, ★★★ — за 3. Следующий кон открывается после победы в предыдущем.</p>
             </div>
-            <p class="guide-note">Каждый следующий кон открывается после победы в предыдущем. Лучшие результаты сохраняются.</p>
+            <div data-lang="kk">
+              <div class="rules-grid">
+                <div class="rule-tile"><b>+1 ұпай</b><p>шеңбер сызығынан тыс тоқтаған асық үшін (ортасы сызықтан тыс).</p></div>
+                <div class="rule-tile"><b>Бір рет</b><p>Шыққан асық алаңнан алынады, екінші рет есептелмейді.</p></div>
+                <div class="rule-tile"><b>5 лақтыру</b><p>бір раундқа. Жеңіс — лақтыру біткенше барлық асықты шығару.</p></div>
+                <div class="rule-tile"><b>Екеулеп</b><p>Кезекпен лақтырасыңдар, әркімде 5 лақтыру. Көп шығарған жеңеді, тең болса — тең.</p></div>
+              </div>
+              <p class="guide-note">Жұлдыздар: ★ — жеңіс, ★★ — 4 лақтыруда жеңіс, ★★★ — 3 лақтыруда. Келесі кон алдыңғысын жеңгенде ашылады.</p>
+            </div>
           </section>
 
           <section role="tabpanel" id="gp-tips" aria-labelledby="tab-tips" tabindex="0" hidden>
-            <ul class="guide-list">
+            <ul class="guide-list" data-lang="ru">
               <li><b>Не бей в полную силу.</b> Обычно хватает 60–80%. Слишком сильный бросок разбрасывает асыки как попало.</li>
               <li><b>Бей вдоль ряда.</b> Встань ближе к краю линии и целься в крайний асык под углом — сақа пройдёт по ряду и собьёт несколько.</li>
               <li><b>Целься в центр асыка.</b> Удар по касательной лишь отводит асык вбок, и он остаётся в круге.</li>
               <li><b>Добивай одиночек у края.</b> Асык у самой линии легко выбить слабым точным броском.</li>
+              <li><b>Тяжёлые асыки и камни.</b> Тёмный асык тяжелее — бей его сильнее и прямо. Камень не сдвинуть: ищи просвет.</li>
+            </ul>
+            <ul class="guide-list" data-lang="kk">
+              <li><b>Толық күшпен ұрма.</b> Әдетте 60–80% жеткілікті. Тым күшті лақтыру асықтарды бей-берекет шашады.</li>
+              <li><b>Қатардың бойымен ұр.</b> Сызықтың шетіне жақын тұрып, шеткі асыққа қиғаштап көзде — сақа қатармен өтіп, бірнешеуін қағады.</li>
+              <li><b>Асықтың ортасына көзде.</b> Қағыта тиген соққы асықты тек бүйірге ығыстырады, ол шеңберде қалады.</li>
+              <li><b>Шеттегілерді шығар.</b> Сызықтың жанындағы асықты әлсіз, дәл лақтырумен оңай шығарасың.</li>
+              <li><b>Ауыр асық пен тас.</b> Қара асық ауырырақ — оны күштірек әрі тура ұр. Тасты қозғай алмайсың: саңылау ізде.</li>
             </ul>
           </section>
 
           <section role="tabpanel" id="gp-words" aria-labelledby="tab-words" tabindex="0" hidden>
-            <dl class="guide-dict">
+            <dl class="guide-dict" data-lang="ru">
               <div><dt>асық</dt><dd>асык — таранная косточка барана, главный «инвентарь» игры</dd></div>
               <div><dt>асық ату</dt><dd>«стрельба асыками» — название игры</dd></div>
               <div><dt>сақа</dt><dd>бита — самый крупный и тяжёлый асык, которым бросают</dd></div>
@@ -219,18 +339,43 @@
               <div><dt>сызық</dt><dd>черта, линия броска</dd></div>
               <div><dt>ата</dt><dd>дедушка — уважительное обращение к старшему</dd></div>
             </dl>
+            <dl class="guide-dict" data-lang="kk">
+              <div><dt>асық</dt><dd>қойдың тобық сүйегі, ойынның басты құралы (орысша: асык)</dd></div>
+              <div><dt>асық ату</dt><dd>ойынның атауы (орысша: «стрельба асыками»)</dd></div>
+              <div><dt>сақа</dt><dd>ең ірі әрі ауыр асық, онымен лақтырады (орысша: бита)</dd></div>
+              <div><dt>кон</dt><dd>асықтар тұратын шеңбер не қатар; ойыншылардың бәсі де (орысша: круг, ставка)</dd></div>
+              <div><dt>алшы</dt><dd>асық бір қырымен жатыр; ең сәтті жағы саналады</dd></div>
+              <div><dt>тәйкі</dt><dd>асық қарама-қарсы қырымен жатыр</dd></div>
+              <div><dt>бүк</dt><dd>асық дөңес жағымен жоғары жатыр</dd></div>
+              <div><dt>шік</dt><dd>асық ойыс жағымен жоғары жатыр</dd></div>
+              <div><dt>сызық</dt><dd>лақтыру сызығы, шек (орысша: черта)</dd></div>
+              <div><dt>ата</dt><dd>үлкен кісіге құрметпен айтылатын сөз (орысша: дедушка)</dd></div>
+            </dl>
           </section>
 
           <section role="tabpanel" id="gp-trad" aria-labelledby="tab-trad" tabindex="0" hidden>
-            <p class="guide-note guide-note--top">Правила в разных регионах отличаются, но основа общая.</p>
-            <ul class="guide-list">
-              <li>На ровной земле чертят круг или линию. Каждый игрок ставит в ряд свои асыки — это ставка.</li>
-              <li>Очерёдность часто определяют, подбрасывая асык: важно, какой стороной он упадёт (алшы, тәйкі, бүк, шік).</li>
-              <li>Бросают сақа — крупный асык, нередко утяжелённый свинцом и окрашенный, — рукой с условленного расстояния.</li>
-              <li>Выбитые асыки игрок забирает себе. Пока выбивает, часто бросает снова.</li>
-              <li>Если сақа осталась в круге, игрок может потерять ход или поставить сақа в кон.</li>
-            </ul>
-            <p class="guide-note">В этой версии упрощено: нет ставок и жеребьёвки, у каждого ровно 5 бросков, нет штрафа за сақа в круге, а бросок рукой заменён оттяжкой рогаткой.</p>
+            <div data-lang="ru">
+              <p class="guide-note guide-note--top">Правила в разных регионах отличаются, но основа общая.</p>
+              <ul class="guide-list">
+                <li>На ровной земле чертят круг или линию. Каждый игрок ставит в ряд свои асыки — это ставка.</li>
+                <li>Очерёдность часто определяют, подбрасывая асык: важно, какой стороной он упадёт (алшы, тәйкі, бүк, шік).</li>
+                <li>Бросают сақа — крупный асык, нередко утяжелённый свинцом и окрашенный, — рукой с условленного расстояния.</li>
+                <li>Выбитые асыки игрок забирает себе. Пока выбивает, часто бросает снова.</li>
+                <li>Если сақа осталась в круге, игрок может потерять ход или поставить сақа в кон.</li>
+              </ul>
+              <p class="guide-note">В этой версии упрощено: нет ставок, у каждого 5 бросков, бросок рукой заменён оттяжкой рогаткой. Режим «Традиционные правила» ближе к настоящей игре: выбил — бросаешь ещё раз, сақа осталась в коне впустую — бросок сгорает. А кто начинает вдвоём и с компьютером, всегда решает жеребьёвка асыком.</p>
+            </div>
+            <div data-lang="kk">
+              <p class="guide-note guide-note--top">Ережелер өңірге қарай әртүрлі, бірақ негізі бір.</p>
+              <ul class="guide-list">
+                <li>Тегіс жерге шеңбер не сызық сызылады. Әр ойыншы өз асықтарын қатарға қояды — бұл бәс.</li>
+                <li>Кезекті көбіне асық үйіріп анықтайды: оның қай жағымен түскені маңызды (алшы, тәйкі, бүк, шік).</li>
+                <li>Сақаны — ірі, кейде қорғасын құйылған, боялған асықты — келісілген қашықтықтан қолмен лақтырады.</li>
+                <li>Шығарылған асықтарды ойыншы өзіне алады. Шығарып тұрғанда, жиі қайта лақтырады.</li>
+                <li>Сақа шеңберде қалса, ойыншы кезегінен айырылуы не сақасын конға қоюы мүмкін.</li>
+              </ul>
+              <p class="guide-note">Бұл нұсқада жеңілдетілген: бәс жоқ, әркімде 5 лақтыру, қол лақтыру рогаткамен ауыстырылған. «Дәстүрлі ережелер» режимі нағыз ойынға жақын: шығарсаң — тағы лақтырасың, сақа бос конда қалса — лақтыру күйеді. Ал екеулеп пен компьютермен кім бастайтынын әрдайым асықпен жеребе шешеді.</p>
+            </div>
           </section>
         </div>
 
@@ -238,20 +383,50 @@
           <label class="switch">
             <input type="checkbox" id="hints-toggle">
             <span class="switch-track" aria-hidden="true"></span>
-            <span>Подсказки Ата после бросков</span>
+            <span data-i18n="settings.hints">Подсказки Ата после бросков</span>
           </label>
         </footer>
       </div>
     </div>
 
+    <!-- настройки -->
+    <div class="guide settings" id="settings" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+      <div class="guide-card settings-card">
+        <header class="settings-head">
+          <h2 id="settings-title" data-i18n="settings.title">Настройки</h2>
+          <button class="icon-btn guide-close" type="button" id="settings-close" data-i18n-aria="common.close" aria-label="Закрыть">×</button>
+        </header>
+        <div class="guide-body settings-body">
+          <div class="setting-lang">
+            <span class="seg-label" id="lang-label" data-i18n="settings.lang">Язык</span>
+            <div class="seg" role="radiogroup" aria-labelledby="lang-label">
+              <button type="button" role="radio" data-lang-set="ru" lang="ru">Русский</button>
+              <button type="button" role="radio" data-lang-set="kk" lang="kk">Қазақша</button>
+            </div>
+          </div>
+          <label class="switch switch--row"><input type="checkbox" data-flag="sound"><span class="switch-track" aria-hidden="true"></span><span data-i18n="settings.sound">Звук</span></label>
+          <label class="switch switch--row"><input type="checkbox" data-flag="vibrate"><span class="switch-track" aria-hidden="true"></span><span data-i18n="settings.vibrate">Вибрация при ударах</span></label>
+          <label class="switch switch--row"><input type="checkbox" data-flag="hints"><span class="switch-track" aria-hidden="true"></span><span data-i18n="settings.hints">Подсказки Ата после бросков</span></label>
+          <label class="switch switch--row"><input type="checkbox" data-flag="leftHand"><span class="switch-track" aria-hidden="true"></span><span data-i18n="settings.leftHand">Для левши: кнопки слева</span></label>
+          <label class="switch switch--row"><input type="checkbox" data-flag="bigUi"><span class="switch-track" aria-hidden="true"></span><span data-i18n="settings.bigUi">Крупный интерфейс</span></label>
+          <div class="install-box">
+            <button class="btn btn--secondary btn--small" type="button" id="install-btn" data-i18n="settings.install" hidden>Установить на телефон</button>
+            <p class="guide-note" id="install-note"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script src="js/storage.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/levels.js"></script>
+  <script src="js/storage.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/physics.js"></script>
   <script src="js/render.js"></script>
   <script src="js/ata.js"></script>
+  <script src="js/bot.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>

@@ -5,6 +5,8 @@
   'use strict';
 
   var Store = window.AsykStorage;
+  var I18n = window.AsykI18n;
+  var t = I18n.t;
   var $ = function (id) { return document.getElementById(id); };
 
   var btn = $('ata-btn');
@@ -83,7 +85,7 @@
   });
 
   hintsToggle.addEventListener('change', function () {
-    Store.setHints(hintsToggle.checked);
+    Store.setFlag('hints', hintsToggle.checked);
     if (!hintsToggle.checked) hideTip();
   });
 
@@ -113,6 +115,7 @@
      s — данные броска, которые собирает game.js:
        power, dirX         — сила 0..1 и горизонтальная составляющая направления
        sakaHit, firstCos   — попала ли сақа в асык и насколько прямо (1 = в центр)
+       hitStone            — сақа ударилась о камень
        noTarget, missSide  — перед броском впереди не было асыков / сторона промаха
        fellShort           — сақа остановилась, не долетев до асыков
        knocked, remaining  — выбито этим броском / осталось в круге
@@ -120,50 +123,30 @@
        throwsLeft          — сколько бросков осталось у этого игрока */
   function analyze(s) {
     var n = s.knocked;
+    var P = { p: pct(s.power), n: n, asyks: I18n.asyks(n) };
 
-    if (n >= 2) {
-      return { key: 'multi', important: true, text: pick([
-        'Керемет! Сразу ' + n + ' за один бросок — вот это удар!',
-        'Жарайсың! ' + n + (n < 5 ? ' асыка' : ' асыков') + ' разом. Так и бьют мастера.'
-      ]) };
-    }
+    if (n >= 2) return { key: 'multi', important: true, text: t(pick(['ata.multi1', 'ata.multi2']), P) };
 
     if (!s.sakaHit) {
-      if (s.noTarget) {
-        return { key: 'away', important: true, text: 'Сақа ушла мимо кона. Тяни назад — от асыков, тогда сақа полетит к ним.' };
-      }
-      if (s.fellShort) {
-        return { key: 'short', important: true, text: 'Сила ' + pct(s.power) + ' — сақа не долетела до асыков. Тяни дальше, до 60–80%.' };
-      }
-      if (s.missSide) {
-        var went = s.missSide === 'left' ? 'левее' : 'правее';
-        var fix = s.missSide === 'left' ? 'правее' : 'левее';
-        return { key: 'miss-' + s.missSide, important: true, text: 'Мимо: пунктир прошёл ' + went + ' асыков. Возьми чуть ' + fix + ' — и попадёшь.' };
-      }
-      return { key: 'miss', important: true, text: 'Мимо. Следи, чтобы пунктир прицела упирался прямо в асык.' };
+      if (s.hitStone) return { key: 'stone', important: true, text: t('ata.stone') };
+      if (s.noTarget) return { key: 'away', important: true, text: t('ata.away') };
+      if (s.fellShort) return { key: 'short', important: true, text: t('ata.short', P) };
+      if (s.missSide === 'left') return { key: 'miss-left', important: true, text: t('ata.missLeft') };
+      if (s.missSide === 'right') return { key: 'miss-right', important: true, text: t('ata.missRight') };
+      return { key: 'miss', important: true, text: t('ata.miss') };
     }
 
     if (n === 0) {
-      if (s.power >= 0.9) {
-        return { key: 'strong', important: true, text: 'Сила ' + pct(s.power) + ' — асыки разлетелись, но остались в круге. Точность важнее силы: попробуй 60–80%.' };
-      }
-      if (s.firstCos < 0.55) {
-        return { key: 'glance', important: true, text: 'Удар пришёлся по касательной. Целься в центр асыка — тогда он улетит дальше.' };
-      }
-      if (s.power < 0.5) {
-        return { key: 'weak', important: true, text: 'Попал, но слабо (' + pct(s.power) + '): асыки сдвинулись и остались в круге. Добавь силы.' };
-      }
-      return { key: 'almost', important: true, text: 'Почти! Асык не дотянул до линии. Попробуй бить вдоль ряда, под углом.' };
+      if (s.power >= 0.9) return { key: 'strong', important: true, text: t('ata.strong', P) };
+      if (s.firstCos < 0.55) return { key: 'glance', important: true, text: t('ata.glance') };
+      if (s.power < 0.5) return { key: 'weak', important: true, text: t('ata.weak', P) };
+      return { key: 'almost', important: true, text: t('ata.almost') };
     }
 
     // выбит ровно один
-    if (s.nearEdge > 0 && s.throwsLeft > 0) {
-      return { key: 'edge', important: false, text: '+1, молодец! Видишь асык у самой линии? Его легко добить слабым точным броском.' };
-    }
-    if (Math.abs(s.dirX) < 0.12 && s.remaining >= 3 && s.throwsLeft > 0) {
-      return { key: 'row', important: false, text: '+1! Совет: встань ближе к краю линии и бей вдоль ряда — так можно выбить несколько сразу.' };
-    }
-    return { key: 'one', important: false, text: pick(['Жақсы! +1. Так держать.', 'Бәрекелді! Асык за линией.']) };
+    if (s.nearEdge > 0 && s.throwsLeft > 0) return { key: 'edge', important: false, text: t('ata.edge') };
+    if (Math.abs(s.dirX) < 0.12 && s.remaining >= 3 && s.throwsLeft > 0) return { key: 'row', important: false, text: t('ata.row') };
+    return { key: 'one', important: false, text: t(pick(['ata.one1', 'ata.one2'])) };
   }
 
   /* Решаем, стоит ли говорить: промахи и крупные удачи — всегда,
